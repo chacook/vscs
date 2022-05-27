@@ -14,9 +14,11 @@ DELIM = "!"
 """
 get request: g<KEY>!
 set request: s<KEY>!<DATA>
+delete request: d<KEY>!
 
 get response: <DATA> or /x00 if null
 set response: !
+delete response: !
 """
 
 def start_server():
@@ -79,6 +81,9 @@ def start_server():
 					elif command == "s" and len(data) > 0:
 						cache[key] = data
 						current_socket.sendall(b"!")
+					elif command == "d":
+						cache.pop(key, None)
+						current_socket.sendall(b"!")
 					else:
 						current_socket.close()
 						clients.remove(current_socket)
@@ -90,6 +95,7 @@ def start_server():
 		except KeyboardInterrupt:
 			if total_time > 0:
 				print(f"Completed {total_requests} requests in {total_time} seconds. Average: {total_requests / total_time} per second.")
+			exit(0)
 		except Exception as e:
 			print(e)
 
