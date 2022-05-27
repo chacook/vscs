@@ -35,8 +35,6 @@ def start_server():
 	cache = {}
 	total_requests = 0
 	total_time = 0.0
-	start_time = 0.0
-	end_time = 0.0
 
 	while True:
 		try:
@@ -46,52 +44,52 @@ def start_server():
 				if current_socket is server_socket:
 					client_conn, client_addr = server_socket.accept()
 					clients.append(client_conn)
-			else:
-				client_request_bin = current_socket.recv(BUFFER_SIZE)
-				start_time = time.time()
-
-				if client_request_bin is None:
-					current_socket.close()
-					clients.remove(current_socket)
-					continue
-
-				client_request_decoded = client_request_bin.decode()
-
-				if client_request_decoded == "":
-					current_socket.close()
-					clients.remove(current_socket)
-					continue
-
-				key_and_data = client_request_decoded.split(DELIM, 1)
-				key = key_and_data[0]
-				key_length = len(key)
-				data = client_request_bin[key_length + 1:]
-
-				if key_length == 0 or key_length > MAX_KEY_SIZE:
-					current_socket.close()
-					clients.remove(current_socket)
-					continue
-
-				command = key[0]
-				key = key[1:]
-
-				if command == "g":
-					response = cache.get(key, b"\x00")
-					current_socket.sendall(response)
-				elif command == "s" and len(data) > 0:
-					cache[key] = data
-					current_socket.sendall(b"!")
 				else:
-					current_socket.close()
-					clients.remove(current_socket)
-					continue
+					client_request_bin = current_socket.recv(BUFFER_SIZE)
+					start_time = time.time()
 
-				end_time = time.time()
-				total_time += end_time - start_time
-				total_requests += 1
+					if client_request_bin is None:
+						current_socket.close()
+						clients.remove(current_socket)
+						continue
+
+					client_request_decoded = client_request_bin.decode()
+
+					if client_request_decoded == "":
+						current_socket.close()
+						clients.remove(current_socket)
+						continue
+
+					key_and_data = client_request_decoded.split(DELIM, 1)
+					key = key_and_data[0]
+					key_length = len(key)
+					data = client_request_bin[key_length + 1:]
+
+					if key_length == 0 or key_length > MAX_KEY_SIZE:
+						current_socket.close()
+						clients.remove(current_socket)
+						continue
+
+					command = key[0]
+					key = key[1:]
+
+					if command == "g":
+						response = cache.get(key, b"\x00")
+						current_socket.sendall(response)
+					elif command == "s" and len(data) > 0:
+						cache[key] = data
+						current_socket.sendall(b"!")
+					else:
+						current_socket.close()
+						clients.remove(current_socket)
+						continue
+
+					end_time = time.time()
+					total_time += end_time - start_time
+					total_requests += 1
 		except KeyboardInterrupt:
-			print(f"Completed {total_requests} requests in {total_time} seconds. Average: {total_requests / total_time} per second.")
-			exit(0)
+			if total_time > 0:
+				print(f"Completed {total_requests} requests in {total_time} seconds. Average: {total_requests / total_time} per second.")
 		except Exception as e:
 			print(e)
 
