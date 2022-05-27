@@ -67,7 +67,7 @@ def start_server():
 				key_length = len(key)
 				data = client_request_bin[key_length + 1:]
 
-				if key_length == 0 or key_length > MAX_KEY_SIZE or len(data) == 0:
+				if key_length == 0 or key_length > MAX_KEY_SIZE:
 					current_socket.close()
 					clients.remove(current_socket)
 					continue
@@ -78,7 +78,7 @@ def start_server():
 				if command == "g":
 					response = cache.get(key, b"\x00")
 					current_socket.sendall(response)
-				elif command == "s":
+				elif command == "s" and len(data) > 0:
 					cache[key] = data
 					current_socket.sendall(b"!")
 				else:
