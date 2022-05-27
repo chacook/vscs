@@ -21,7 +21,7 @@ set response: !
 delete response: !
 """
 
-def start_server():
+def run_server():
 	try:
 		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -47,8 +47,8 @@ def start_server():
 					client_conn, client_addr = server_socket.accept()
 					clients.append(client_conn)
 				else:
-					client_request_bin = current_socket.recv(BUFFER_SIZE)
 					start_time = time.time()
+					client_request_bin = current_socket.recv(BUFFER_SIZE)
 
 					if client_request_bin is None:
 						current_socket.close()
@@ -92,12 +92,13 @@ def start_server():
 					end_time = time.time()
 					total_time += end_time - start_time
 					total_requests += 1
+
 		except KeyboardInterrupt:
 			if total_time > 0:
-				print(f"Completed {total_requests} requests in {total_time} seconds. Average: {total_requests / total_time} per second.")
+				print(f"\nCompleted {total_requests} requests in {total_time} seconds. Average: {total_requests / total_time} per second.")
 			exit(0)
 		except Exception as e:
 			print(e)
 
 if __name__ == "__main__":
-	start_server()
+	run_server()
