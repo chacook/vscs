@@ -15,7 +15,7 @@ DELIM = "!"
 get request: g<KEY>!
 set request: s<KEY>!<DATA>
 
-get response: <DATA> or </x00> if null
+get response: <DATA> or /x00 if null
 set response: !
 """
 
