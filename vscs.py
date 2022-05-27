@@ -1,6 +1,6 @@
 # very simple cache server
+import select
 import socket
-import hashlib
 import time
 
 SERVER_IP = "127.0.0.1"
