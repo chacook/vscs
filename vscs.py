@@ -95,7 +95,7 @@ def run_server():
 
 		except KeyboardInterrupt:
 			if total_time > 0:
-				print(f"\nCompleted {total_requests} requests in {total_time} seconds. Average: {total_requests / total_time} per second.")
+				print(f"\nCompleted {total_requests} requests in {total_time} seconds. \nAverage: {total_requests / total_time} per second.")
 			exit(0)
 		except Exception as e:
 			print(e)
