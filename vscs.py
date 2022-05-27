@@ -86,9 +86,9 @@ def start_server():
 					clients.remove(current_socket)
 					continue
 
-				total_requests += 1
 				end_time = time.time()
 				total_time += end_time - start_time
+				total_requests += 1
 		except KeyboardInterrupt:
 			print(f"Completed {total_requests} requests in {total_time} seconds. Average: {total_requests / total_time} per second.")
 			exit(0)
