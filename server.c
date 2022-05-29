@@ -110,9 +110,6 @@ void serve(){
         exit(1);
     }
 	
-	FD_ZERO(&readable);
-	FD_SET(server_fd, &readable);
-	
 	//necessary?
 	int flag = fcntl(server_fd, F_GETFL, 0);
 	flag |= O_NONBLOCK;
@@ -127,9 +124,14 @@ void serve(){
 
     while(keep_running)
     {
+		FD_ZERO(&readable);
+		FD_SET(server_fd, &readable);
 		max_fd = server_fd + 1;
 		
 		for (int i = 0; i < MAX_NUM_CONNS; i++){
+			if (clients[i] != -1){
+				FD_SET(clients[i], &readable);
+			}
 			if (clients[i] >= max_fd){
 				max_fd = clients[i] + 1;
 			}
