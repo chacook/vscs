@@ -13,10 +13,10 @@ def run_client():
         print(e)
         exit(1)
 
-    for i in range(20000):
+    for i in range(1_000_000):
         client_socket.sendall(b"hi")
         r = client_socket.recv(1024)
-        print(r.decode())
+        #print(r.decode())
 
 if __name__ == "__main__":
     run_client()

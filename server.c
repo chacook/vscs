@@ -30,6 +30,8 @@ void int_handler(int s);
 // uint16_t lens[NUM_ROWS]; // -1 if row is empty
 
 int keep_running = 1;
+int total_requests = 0;
+double total_time = 0.0;
 
 int main(void){
 	signal(SIGINT, int_handler);
@@ -39,7 +41,10 @@ int main(void){
 
 void int_handler(int s) {
     keep_running = 0;
-	printf("\nShutting down server\n");
+	if (total_requests > 0){
+		printf("\nRequests completed: %d in %f seconds.\n", total_requests, total_time);
+		printf("Average: %f requests/seconds.\n", total_requests / total_time);
+	}
 }
 
 void serve(){
@@ -49,7 +54,7 @@ void serve(){
 	socklen_t addrlen;
 	int option;
 	char* port = "5000";
-	int MAX_NUM_CONNS = 5;
+	int MAX_NUM_CONNS = 1000;
 	int server_fd;
 	int clients[MAX_NUM_CONNS];
 	int backlog = 1000; //max listen queue length
@@ -62,6 +67,7 @@ void serve(){
 	int select_response;
 	int current_client_fd;
 	int max_fd;
+	clock_t start, end;
 
     //get addrinfo for host
     memset(&hints, 0, sizeof(hints)); //initialize struct to 0
@@ -138,7 +144,6 @@ void serve(){
 		}
 		
 		//not really sure why I have to do this everytime
-		FD_SET(server_fd, &readable);
 		select_response = select(max_fd, &readable, NULL, NULL, NULL);
 		
 		if (select_response <= 0){
@@ -182,6 +187,8 @@ void serve(){
 				continue;
 			}
 			
+			start = clock();
+			
 			current_client_fd = clients[i];
 			
 			if (FD_ISSET(current_client_fd, &readable)){
@@ -206,11 +213,18 @@ void serve(){
 					FD_CLR(current_client_fd, &readable);
 				}
 				else{
-					printf("Responded with %s\n", resp);
+					// for (int i = 0; i < 100000; i++)
+					// {
+						
+					// }
+					end = clock();
+					total_time += ((double) (end - start)) / CLOCKS_PER_SEC;
+					total_requests += 1;
+					//printf("Responded with %s\n", resp);
 				}
 			} // FD_ISSET
 		} //for i in (0, MAX_NUM_CONNS-1) 
-    } //while(1)
+    } //while(keep_running)
 }
 
 //credit: http://www.azillionmonkeys.com/qed/hash.html
