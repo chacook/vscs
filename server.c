@@ -32,7 +32,7 @@ void int_handler(int s);
 int keep_running = 1;
 
 int main(void){
-	signal(SIGINT, intHandler);
+	signal(SIGINT, int_handler);
 	serve();
 	return 0;
 }
