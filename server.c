@@ -33,70 +33,110 @@ int main(void){
 }
 
 void serve(){
-	int sockfd = -1, connfd = -1, client_num = -1;
-    struct sockaddr_in servaddr, clientaddr;
-	socklen_t addrlen;
-	int MAX = 1000;
-	char buff[MAX];
-	char* resp = "thanks for the message\n";
-	int clients[1000];
+	char* port = "5000";
 	int MAX_NUM_CONNS = 100;
-   
-    // socket create and verification
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        printf("Socket creation failed.\n");
-        exit(0);
+	int listen_fd, clients[MAX_NUM_CONNS];
+	struct addrinfo hints, *res, *p;
+    int option;
+	struct sockaddr_in clientaddr;
+    socklen_t addrlen;   
+    int client_num = 0;
+	int BUFFER_SIZE = 1024;
+	char buffer[BUFFER_SIZE];
+	int message_size;
+	int backlog = 1000; //max listen queue length
+	int client_fd;
+	char* resp = "X";
+
+    //get addrinfo for host
+    memset(&hints, 0, sizeof(hints)); //initialize struct to 0
+    hints.ai_family = AF_INET; //support iv4 ip addresses
+    hints.ai_socktype = SOCK_STREAM; //TCP protocol
+    hints.ai_flags = AI_PASSIVE; //indicates addr will be used in bind()
+
+    if (getaddrinfo(NULL, port, &hints, &res) != 0)
+    {
+        perror("getaddrinfo() failed.\n");
+        exit(1);
     }
-	
-    memset(&servaddr, '\0', sizeof(servaddr));
-   
-    // assign IP, PORT
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(5000);
-   
-    // Binding newly created socket to given IP and verification
-    if ((bind(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr))) != 0) {
-        printf("Bind failed...\n");
-        exit(0);
+
+    //bind socket to port
+    for (p = res; p != NULL; p = p->ai_next)
+    {
+        option = 1;
+        listen_fd = socket(p->ai_family, p->ai_socktype, 0);
+        setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+
+        //socket creation failed
+        if (listen_fd == -1) 
+        {
+            continue;
+        }
+
+        //bind successful
+        if (bind(listen_fd, p->ai_addr, p->ai_addrlen) == 0)
+        {
+            break;
+        }
     }
-   
-    // Now server is ready to listen and verification
-    if ((listen(sockfd, 5)) != 0) {
-        printf("Listen failed.\n");
-        exit(0);
+
+    if (p == NULL)
+    {
+        perror("socket() or bind() failed.\n");
+        exit(1);
     }
-	
-	while(1)
+
+    freeaddrinfo(res);
+
+    // listen for incoming connections
+    if (listen(listen_fd, backlog) != 0)
+    {
+        perror("listen() failed.\n");
+        exit(1);
+    }
+    
+    printf("Server started at http://127.0.0.1:%s\n", port);
+
+    //initialize clients array (-1 = no client)
+    for (int i = 0; i < MAX_NUM_CONNS; i++)
+    {
+        clients[i] = -1;
+    }
+
+
+    //accept connections
+    while(1)
     {
         addrlen = sizeof(clientaddr);
-        connfd = accept(sockfd, (struct sockaddr *) &clientaddr, &addrlen);
-		clients[client_num] = connfd;
+        clients[client_num] = accept(listen_fd, (struct sockaddr *)&clientaddr, &addrlen);
 
         if (clients[client_num] < 0)
         {
             perror("accept() failed.\n");
 			continue;
         }
-     
-        memset(buff, '\0', MAX);
 
-		read(connfd, buff, sizeof(buff));
+		message_size = recv(clients[client_num], buffer, BUFFER_SIZE, 0);
+		if (message_size < 0)
+		{
+			perror("recv() failed.\n");
+			exit(1);
+		}
+		else if (message_size == 0)
+		{
+			perror("Client disconnected unexpectedly.\n");
+			exit(1);
+		}
+		
+		client_fd = clients[client_num];
+		write(client_fd, resp, strlen(resp));
 
-		// and send that buffer to client
-		write(connfd, resp, strlen(resp));
-
-		// After chatting close the socket
-		close(sockfd);			
-						
-						
 		//find empty spot for next client
 		while (clients[client_num] != -1)
 		{
 			client_num = (client_num + 1) % MAX_NUM_CONNS;
 		}
-           
+              
     }
    
 }

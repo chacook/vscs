@@ -14,7 +14,8 @@ def run_client():
         exit(1)
 
     client_socket.sendall(b"hi")
-    client_socket.recv(1024)
+    r = client_socket.recv(1024)
+    print(r.decode())
 
 if __name__ == "__main__":
     run_client()
