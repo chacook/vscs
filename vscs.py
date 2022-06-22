@@ -15,10 +15,12 @@ DELIM = "!"
 get request: g<KEY>!
 set request: s<KEY>!<DATA>
 delete request: d<KEY>!
+clear cache request: c!
 
 get response: <DATA> or /x00 if null
 set response: !
 delete response: !
+clear response: !
 """
 
 def run_server():
@@ -27,7 +29,6 @@ def run_server():
 		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		server_socket.bind((SERVER_IP, SERVER_PORT))
 		server_socket.listen(BACKLOG_LENGTH)
-		server_socket.setblocking(False)  # necessary?
 		print(f"Server listening at {SERVER_IP}:{SERVER_PORT}")
 	except Exception as e:
 		print(e)
@@ -50,20 +51,13 @@ def run_server():
 					start_time = time.time()
 					client_request_bin = current_socket.recv(BUFFER_SIZE)
 
-					if client_request_bin is None:
+					if client_request_bin is None or len(client_request_bin) == 0:
 						current_socket.close()
 						clients.remove(current_socket)
 						continue
 
-					client_request_decoded = client_request_bin.decode()
-
-					if client_request_decoded == "":
-						current_socket.close()
-						clients.remove(current_socket)
-						continue
-
-					key_and_data = client_request_decoded.split(DELIM, 1)
-					key = key_and_data[0]
+					key_and_data = client_request_bin.split(DELIM, 1)
+					key = key_and_data[0].decode()
 					key_length = len(key)
 					data = client_request_bin[key_length + 1:]
 
@@ -84,6 +78,9 @@ def run_server():
 					elif command == "d":
 						cache.pop(key, None)
 						current_socket.sendall(b"!")
+					elif command == "c":
+						cache.clear()
+						current_socket.sendall(b"!")
 					else:
 						current_socket.close()
 						clients.remove(current_socket)
@@ -92,7 +89,6 @@ def run_server():
 					end_time = time.time()
 					total_time += end_time - start_time
 					total_requests += 1
-
 		except KeyboardInterrupt:
 			if total_time > 0:
 				print(f"\nCompleted {total_requests} requests in {total_time} seconds. \nAverage: {total_requests / total_time} per second.")
