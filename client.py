@@ -17,7 +17,7 @@ data = [
     ]
 
 def get_random_command():
-    command = random.choice(commands) + DELIM + "".join(random.choice(chars) for _ in range(30)) + random.choice(data)
+    command = random.choice(commands) + "".join(random.choice(chars) for _ in range(30)) + DELIM + random.choice(data)
     return command.encode()
 
 def run_client():
@@ -34,6 +34,9 @@ def run_client():
         random_command = get_random_command()
         client_socket.sendall(random_command)
         client_socket.recv(BUFFER_SIZE)
+        print("Completed", i)
+
+    client_socket.close()
 
 if __name__ == "__main__":
     run_client()

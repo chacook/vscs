@@ -1,4 +1,3 @@
-# very simple cache server
 import select
 import socket
 import time
@@ -6,12 +5,13 @@ import time
 SERVER_IP = "127.0.0.1"
 SERVER_PORT = 5000
 BACKLOG_LENGTH = 1000
-MAX_KEY_SIZE = 32
+DELIM = b"!"
+MAX_KEY_SIZE = 63
 MAX_DATA_SIZE = 1024
 BUFFER_SIZE = MAX_KEY_SIZE + MAX_DATA_SIZE
-DELIM = "!"
 
 """
+PROTOCOL:
 get request: g<KEY>!
 set request: s<KEY>!<DATA>
 delete request: d<KEY>!
@@ -32,7 +32,7 @@ def run_server():
 		print(f"Server listening at {SERVER_IP}:{SERVER_PORT}")
 	except Exception as e:
 		print(e)
-		exit(1)
+		exit(0)
 
 	clients = []
 	cache = {}
@@ -41,7 +41,7 @@ def run_server():
 
 	while True:
 		try:
-			readable, writeable, exceptional = select.select([server_socket] + clients, [], [])
+			readable, _, _ = select.select([server_socket, *clients], [], [])
 
 			for current_socket in readable:
 				if current_socket is server_socket:
@@ -49,17 +49,17 @@ def run_server():
 					clients.append(client_conn)
 				else:
 					start_time = time.time()
-					client_request_bin = current_socket.recv(BUFFER_SIZE)
+					request_binary = current_socket.recv(BUFFER_SIZE)
 
-					if client_request_bin is None or len(client_request_bin) == 0:
+					if request_binary is None or len(request_binary) == 0:
 						current_socket.close()
 						clients.remove(current_socket)
 						continue
 
-					key_and_data = client_request_bin.split(DELIM, 1)
+					key_and_data = request_binary.split(DELIM, 1)
 					key = key_and_data[0].decode()
 					key_length = len(key)
-					data = client_request_bin[key_length + 1:]
+					data = request_binary[key_length + 1:]
 
 					if key_length == 0 or key_length > MAX_KEY_SIZE:
 						current_socket.close()
@@ -74,13 +74,13 @@ def run_server():
 						current_socket.sendall(response)
 					elif command == "s" and len(data) > 0:
 						cache[key] = data
-						current_socket.sendall(b"!")
+						current_socket.sendall(DELIM)
 					elif command == "d":
 						cache.pop(key, None)
-						current_socket.sendall(b"!")
+						current_socket.sendall(DELIM)
 					elif command == "c":
 						cache.clear()
-						current_socket.sendall(b"!")
+						current_socket.sendall(DELIM)
 					else:
 						current_socket.close()
 						clients.remove(current_socket)
