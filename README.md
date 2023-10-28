@@ -19,7 +19,7 @@ clear response: !
 Note: keys cannot contain the delimiter `!`.
 
 ## Performance
-A basic performance test using `client.py`:
+A basic performance test running 3 simultaneous instances of `client.py`:
 ```
 Completed 3000000 requests in 84.06687784194946 seconds.
 Average: 35685.87387817794 per second.
