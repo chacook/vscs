@@ -1,6 +1,6 @@
 # VSCS - Very simple cache server
 
-A 100 lines of code in memory key-value distributed cache.
+An in memory key-value distributed cache in 100 lines of code.
 
 ## To run
 1. Run `python3 vscs.py`.
